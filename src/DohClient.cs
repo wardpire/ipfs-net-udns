@@ -17,9 +17,9 @@ namespace Makaretu.Dns
     ///   Client to a DNS server over HTTPS.
     /// </summary>
     /// <remarks>
-    ///   DNS over HTTPS (DoH) is an experimental protocol for performing remote 
+    ///   DNS over HTTPS (DoH) is an experimental protocol for performing remote
     ///   Domain Name System (DNS) resolution via the HTTPS protocol. The goal
-    ///   is to increase user privacy and security by preventing eavesdropping and 
+    ///   is to increase user privacy and security by preventing eavesdropping and
     ///   manipulation of DNS data by man-in-the-middle attacks.
     ///   <para>
     ///   The <b>DohClient</b> uses the HTTP POST method to hide as much
@@ -43,7 +43,7 @@ namespace Makaretu.Dns
         /// </summary>
         public const string DnsJsonFormat = "application/dns-json";
 
-        static ILog log = LogManager.GetLogger(typeof(DohClient));
+        private static readonly ILog log = LogManager.GetLogger(typeof(DohClient));
 
         /// <summary>
         ///   Time to wait for a DNS response.
@@ -61,9 +61,9 @@ namespace Makaretu.Dns
         /// </value>
         public string ServerUrl { get; set; } = "https://cloudflare-dns.com/dns-query";
 
-        HttpClient httpClient;
-        readonly object httpClientLock = new object();
-        readonly AsyncLock dnsServerLock = new AsyncLock();
+        private HttpClient httpClient;
+        private readonly object httpClientLock = new();
+        private readonly AsyncLock dnsServerLock = new();
 
         /// <summary>
         ///   The client that sends HTTP requests and receives HTTP responses.
@@ -109,7 +109,7 @@ namespace Makaretu.Dns
         /// </exception>
         public override async Task<Message> QueryAsync(
             Message request,
-            CancellationToken cancel = default(CancellationToken))
+            CancellationToken cancel = default)
         {
             if (log.IsDebugEnabled)
             {
@@ -134,7 +134,8 @@ namespace Makaretu.Dns
                 var content = new StreamContent(ms);
                 content.Headers.ContentType = new MediaTypeHeaderValue(DnsWireFormat);
                 // Only one writer at a time.
-                using (await dnsServerLock.LockAsync()) {
+                using (await dnsServerLock.LockAsync(cancel))
+                {
                     httpResponse = await HttpClient.PostAsync(ServerUrl, content, cts.Token);
                 }
             }
@@ -163,6 +164,5 @@ namespace Makaretu.Dns
                 log.Trace(dnsResponse);
             return dnsResponse;
         }
-
     }
 }

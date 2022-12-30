@@ -58,7 +58,7 @@ namespace Makaretu.Dns
         /// </returns>
         Task<IEnumerable<IPAddress>> ResolveAsync(
             DomainName name,
-            CancellationToken cancel = default(CancellationToken));
+            CancellationToken cancel = default);
 
         /// <summary>
         ///   Send a DNS query with the specified name and resource record type.
@@ -82,7 +82,7 @@ namespace Makaretu.Dns
         Task<Message> QueryAsync(
             DomainName name,
             DnsType rtype,
-            CancellationToken cancel = default(CancellationToken));
+            CancellationToken cancel = default);
 
         /// <summary>
         ///   Send a DNSSEC query with the specified name and resource record type.
@@ -107,7 +107,7 @@ namespace Makaretu.Dns
         Task<Message> SecureQueryAsync(
             DomainName name,
             DnsType rtype,
-            CancellationToken cancel = default(CancellationToken));
+            CancellationToken cancel = default);
 
         /// <summary>
         ///   Reverse query for an IP address.
@@ -130,7 +130,7 @@ namespace Makaretu.Dns
         /// </remarks>
         Task<DomainName> ResolveAsync(
             IPAddress address,
-            CancellationToken cancel = default(CancellationToken));
+            CancellationToken cancel = default);
 
         /// <summary>
         ///   Send a DNS query with the specified message.
@@ -157,6 +157,6 @@ namespace Makaretu.Dns
         /// </remarks>
         Task<Message> QueryAsync(
             Message request,
-            CancellationToken cancel = default(CancellationToken));
+            CancellationToken cancel = default);
     }
 }

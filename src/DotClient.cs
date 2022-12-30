@@ -20,9 +20,9 @@ namespace Makaretu.Dns
     ///   Client to a DNS server over TLS.
     /// </summary>
     /// <remarks>
-    ///   DNS over TLS is a security protocol for encrypting and wrapping 
-    ///   DNS queries and answers via the Transport Layer Security (TLS) protocol. The goal 
-    ///   is to increase user privacy and security by preventing eavesdropping and 
+    ///   DNS over TLS is a security protocol for encrypting and wrapping
+    ///   DNS queries and answers via the Transport Layer Security (TLS) protocol. The goal
+    ///   is to increase user privacy and security by preventing eavesdropping and
     ///   manipulation of DNS data via man-in-the-middle attacks.
     ///   <para>
     ///   All queries are padded to the closest multiple of <see cref="BlockLength"/> octets.
@@ -32,9 +32,9 @@ namespace Makaretu.Dns
     /// <seealso href="https://tools.ietf.org/html/rfc8310"/>
     public class DotClient : DnsClientBase
     {
-        SslStream dnsServer;
-        readonly AsyncLock dnsServerLock = new AsyncLock();
-        readonly Random rng = new Random();
+        private SslStream dnsServer;
+        private readonly AsyncLock dnsServerLock = new AsyncLock();
+        private readonly Random rng = new Random();
 
         /// <summary>
         ///   The default port of a DOT server.
@@ -52,26 +52,6 @@ namespace Makaretu.Dns
         /// </remarks>
         public static DotEndPoint[] PublicServers = new[]
         {
-            new DotEndPoint
-            {
-                Hostname = "cloudflare-dns.com",
-                Address = IPAddress.Parse("2606:4700:4700::1111")
-            },
-            new DotEndPoint
-            {
-                Hostname = "cloudflare-dns.com",
-                Address = IPAddress.Parse("2606:4700:4700::1001")
-            },
-            new DotEndPoint
-            {
-                Hostname = "cloudflare-dns.com",
-                Address = IPAddress.Parse("1.1.1.1")
-            },
-            new DotEndPoint
-            {
-                Hostname = "cloudflare-dns.com",
-                Address = IPAddress.Parse("1.0.0.1")
-            },
             new DotEndPoint
             {
                 Hostname = "dns.google",
@@ -94,6 +74,65 @@ namespace Makaretu.Dns
             },
             new DotEndPoint
             {
+                Hostname = "dns.opendns.com",
+                Address = IPAddress.Parse("208.67.222.222")
+            },
+            new DotEndPoint
+            {
+                Hostname = "dns.opendns.com",
+                Address = IPAddress.Parse("208.67.220.220")
+            },
+            new DotEndPoint
+            {
+                Hostname = "dns.quad9.net",
+                Address = IPAddress.Parse("9.9.9.9")
+            },
+            new DotEndPoint
+            {
+                Hostname = "dns.quad9.net",
+                Address = IPAddress.Parse("149.112.112.112")
+            },
+            new DotEndPoint
+            {
+                Hostname = "dns11.quad9.net",
+                Address = IPAddress.Parse("9.9.9.11")
+            },
+            new DotEndPoint
+            {
+                Hostname = "dns11.quad9.net",
+                Address = IPAddress.Parse("149.112.112.11")
+            },
+            new DotEndPoint
+            {
+                Hostname = "family-filter-dns.cleanbrowsing.org",
+                Address = IPAddress.Parse("185.228.168.168")
+            },
+            new DotEndPoint
+            {
+                Hostname = "family-filter-dns.cleanbrowsing.org",
+                Address = IPAddress.Parse("185.228.169.168")
+            },
+            new DotEndPoint
+            {
+                Hostname = "alternate-dns.com",
+                Address = IPAddress.Parse("76.76.19.19")
+            },
+            new DotEndPoint
+            {
+                Hostname = "alternate-dns.com",
+                Address = IPAddress.Parse("76.223.122.150")
+            },
+            new DotEndPoint
+            {
+                Hostname = "cloudflare-dns.com",
+                Address = IPAddress.Parse("1.1.1.1")
+            },
+            new DotEndPoint
+            {
+                Hostname = "cloudflare-dns.com",
+                Address = IPAddress.Parse("1.0.0.1")
+            }, new DotEndPoint
+            {
                 Hostname = "securedns.eu",
                 Pins = new[] { "h3mufC43MEqRD6uE4lz6gAgULZ5/riqH/E+U+jE3H8g=" },
                 Address = IPAddress.Parse("2a03:b0c0:0:1010::e9a:3001")
@@ -104,6 +143,27 @@ namespace Makaretu.Dns
                 Pins = new[] { "h3mufC43MEqRD6uE4lz6gAgULZ5/riqH/E+U+jE3H8g=" },
                 Address = IPAddress.Parse("146.185.167.43")
             },
+            //new DotEndPoint // Downwards are local DNS unique to your country or region
+            //{
+            //    Hostname = "cloudflare-dns.com",
+            //    Address = IPAddress.Parse("1.1.1.1")
+            //},
+            //new DotEndPoint
+            //{
+            //    Hostname = "cloudflare-dns.com",
+            //    Address = IPAddress.Parse("1.0.0.1")
+            //},
+            //new DotEndPoint
+            //{
+            //    Hostname = "cloudflare-dns.com",
+            //    Address = IPAddress.Parse("1.1.1.1")
+            //},
+            //new DotEndPoint
+            //{
+            //    Hostname = "cloudflare-dns.com",
+            //    Address = IPAddress.Parse("1.0.0.1")
+            //},
+
 // see https://github.com/richardschneider/net-udns/issues/18"
 #if false
             new DotEndPoint
@@ -114,7 +174,7 @@ namespace Makaretu.Dns
 #endif
         };
 
-        static ILog log = LogManager.GetLogger(typeof(DotClient));
+        private static ILog log = LogManager.GetLogger(typeof(DotClient));
 
         /// <summary>
         ///   The number of octets for padding.
@@ -153,17 +213,14 @@ namespace Makaretu.Dns
         /// <remarks>
         ///   Contains the requests that are waiting for a response.
         /// </remarks>
-        ConcurrentDictionary<ushort, TaskCompletionSource<Message>> OutstandingRequests = new ConcurrentDictionary<ushort, TaskCompletionSource<Message>>();
+        private readonly ConcurrentDictionary<ushort, TaskCompletionSource<Message>> OutstandingRequests = new ConcurrentDictionary<ushort, TaskCompletionSource<Message>>();
 
         /// <inheritdoc />
         protected override void Dispose(bool disposing)
         {
             if (disposing)
             {
-                if (dnsServer != null)
-                {
-                    dnsServer.Dispose();
-                }
+                dnsServer?.Dispose();
             }
             base.Dispose(disposing);
         }
@@ -190,7 +247,7 @@ namespace Makaretu.Dns
         /// </remarks>
         public override async Task<Message> QueryAsync(
             Message request,
-            CancellationToken cancel = default(CancellationToken))
+            CancellationToken cancel = default)
         {
             // Find a server.
             var server = await GetDnsServerAsync();
@@ -214,7 +271,7 @@ namespace Makaretu.Dns
             // Cancel the request when either the timeout is reached or the
             // task is cancelled by the caller.
             var cts = CancellationTokenSource.CreateLinkedTokenSource(
-                cancel, 
+                cancel,
                 new CancellationTokenSource(Timeout).Token);
             var tcs = new TaskCompletionSource<Message>();
             if (!OutstandingRequests.TryAdd(request.Id, tcs))
@@ -229,12 +286,12 @@ namespace Makaretu.Dns
                 // Only one writer at a time.
                 using (await dnsServerLock.LockAsync())
                 {
-                    await server.WriteAsync(tcpRequest, 0, tcpRequest.Length, cts.Token);
+                    await server.WriteAsync(tcpRequest, cts.Token);
                     await server.FlushAsync(cts.Token);
                 }
                 dnsResponse = await tcs.Task.WaitAsync(cts.Token);
             }
-            catch (TaskCanceledException) when (server != null && !server.CanRead)
+            catch (TaskCanceledException) when (server?.CanRead == false)
             {
                 cts.Dispose();
                 OutstandingRequests.TryRemove(request.Id, out var _);
@@ -266,7 +323,7 @@ namespace Makaretu.Dns
             return dnsResponse;
         }
 
-        byte[] BuildRequest(Message request)
+        private byte[] BuildRequest(Message request)
         {
             // Always have a query ID.
             if (request.Id == 0)
@@ -312,8 +369,8 @@ namespace Makaretu.Dns
                 request.Write(tcpRequest); // udpRequest
                 var length = (ushort)(tcpRequest.Length - 2);
                 tcpRequest.Position = 0;
-                tcpRequest.WriteByte((byte) (length >> 8));
-                tcpRequest.WriteByte((byte) (length));
+                tcpRequest.WriteByte((byte)(length >> 8));
+                tcpRequest.WriteByte((byte)(length));
                 return tcpRequest.ToArray();
             }
         }
@@ -325,17 +382,16 @@ namespace Makaretu.Dns
         public async Task<Stream> GetDnsServerAsync()
         {
             // Is current server still good to go?
-            if (dnsServer != null && dnsServer.CanRead && dnsServer.CanWrite)
+            if (dnsServer?.CanRead == true && dnsServer.CanWrite)
                 return dnsServer;
 
             using (await dnsServerLock.LockAsync())
             {
-                if (dnsServer != null && dnsServer.CanRead && dnsServer.CanWrite)
+                if (dnsServer?.CanRead == true && dnsServer.CanWrite)
                     return dnsServer;
-                if (dnsServer != null)
-                    dnsServer.Dispose();
+                dnsServer?.Dispose();
 
-                var servers =  Servers.Where(s =>
+                var servers = Servers.Where(s =>
                     (Socket.OSSupportsIPv4 && s.Address.AddressFamily == AddressFamily.InterNetwork) ||
                     (Socket.OSSupportsIPv6 && s.Address.AddressFamily == AddressFamily.InterNetworkV6));
                 foreach (var endPoint in servers)
@@ -345,15 +401,15 @@ namespace Makaretu.Dns
                         var socket = new Socket(endPoint.Address.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
                         await socket.ConnectAsync(endPoint.Address, endPoint.Port);
                         Stream stream = new NetworkStream(socket, ownsSocket: true);
-                         dnsServer = new SslStream(
-                            stream,
-                            false, // leave inner stream open
-                            (sender, certificate, chain, errors) =>
-                            {
-                                return ValidateServerCertificate(sender, certificate, chain, errors, endPoint.Pins);
-                            },
-                            null,
-                            EncryptionPolicy.RequireEncryption);
+                        dnsServer = new SslStream(
+                           stream,
+                           false, // leave inner stream open
+                           (sender, certificate, chain, errors) =>
+                           {
+                               return ValidateServerCertificate(sender, certificate, chain, errors, endPoint.Pins);
+                           },
+                           null,
+                           EncryptionPolicy.RequireEncryption);
                         await dnsServer.AuthenticateAsClientAsync(endPoint.Hostname);
 
                         if (log.IsDebugEnabled)
@@ -379,7 +435,7 @@ namespace Makaretu.Dns
             return null;
         }
 
-        static bool ValidateServerCertificate(
+        private static bool ValidateServerCertificate(
           object sender,
           X509Certificate certificate,
           X509Chain chain,
@@ -392,7 +448,7 @@ namespace Makaretu.Dns
             // Verify that the certificate's SPKI matches one of the PINs.
             if (pins == null || pins.Length == 0)
                 return true;
-            
+
             // see https://github.com/richardschneider/net-udns/issues/5
 #if false
             string spki = ""; // TODO: base-64 of certificates SPKI
@@ -400,10 +456,9 @@ namespace Makaretu.Dns
 #else
             return true;
 #endif
-
         }
 
-        void ReadResponses(Stream stream)
+        private void ReadResponses(Stream stream)
         {
             var reader = new WireReader(stream);
             while (stream.CanRead)
@@ -414,7 +469,7 @@ namespace Makaretu.Dns
                     if (length < Message.MinLength)
                         throw new InvalidDataException("DNS response is too small.");
                     if (length > Message.MaxLength)
-                       throw new InvalidDataException("DNS response exceeded max length.");
+                        throw new InvalidDataException("DNS response exceeded max length.");
                     Message response;
                     var packet = reader.ReadBytes(length);
                     try
@@ -449,13 +504,9 @@ namespace Makaretu.Dns
                 }
                 catch (Exception e)
                 {
-#if NETSTANDARD14
-                    if (stream.CanRead)
-#else
-                    if (stream.CanRead && !(e.InnerException is ThreadAbortException))
-#endif
+                    if (stream.CanRead && e.InnerException is not ThreadAbortException)
                     {
-                            log.Error(e);
+                        log.Error(e);
                     }
                     stream.Dispose();
                 }
@@ -468,6 +519,4 @@ namespace Makaretu.Dns
             }
         }
     }
-
-
 }

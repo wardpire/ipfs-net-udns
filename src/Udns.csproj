@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net46;netstandard14;netstandard2</TargetFrameworks>
+	  <TargetFramework>net7.0</TargetFramework>
     <AssemblyName>Makaretu.Dns.Unicast</AssemblyName>
     <RootNamespace>Makaretu.Dns</RootNamespace>
     <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
@@ -31,13 +31,18 @@
 
   <ItemGroup>
     <PackageReference Include="Common.Logging" Version="3.4.1" />
-    <PackageReference Include="Makaretu.Dns" Version="2.0.1" />
-    <PackageReference Include="Nito.AsyncEx" Version="5.0.0" />
+    <PackageReference Include="Nito.AsyncEx" Version="5.1.2" />
   </ItemGroup>
   
   <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard14'">
     <PackageReference Include="System.Net.NetworkInformation" Version="4.3.0" />
     <PackageReference Include="System.Net.Security" Version="4.3.2" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <Reference Include="Makaretu.Dns">
+      <HintPath>..\..\net-dns\src\bin\Release\net7.0\Makaretu.Dns.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 </Project>

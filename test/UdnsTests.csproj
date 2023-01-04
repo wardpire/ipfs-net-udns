@@ -19,7 +19,7 @@
 
   <ItemGroup>
     <Reference Include="Makaretu.Dns">
-      <HintPath>..\..\net-dns\src\bin\Release\net6.0\Makaretu.Dns.dll</HintPath>
+      <HintPath>..\..\net-dns\src\bin\Release\net7.0\Makaretu.Dns.dll</HintPath>
     </Reference>
   </ItemGroup>
 

@@ -28,9 +28,7 @@ namespace Makaretu.Dns
         }
 
         /// <inheritdoc />
-        public async Task<IEnumerable<IPAddress>> ResolveAsync(
-            DomainName name,
-            CancellationToken cancel = default)
+        public async Task<IEnumerable<IPAddress>> ResolveAsync(DomainName name, CancellationToken cancel = default)
         {
             var a = QueryAsync(name, DnsType.A, cancel);
             var aaaa = QueryAsync(name, DnsType.AAAA, cancel);
@@ -44,15 +42,12 @@ namespace Makaretu.Dns
         }
 
         /// <inheritdoc />
-        public Task<Message> QueryAsync(
-            DomainName name,
-            DnsType rtype,
-            CancellationToken cancel = default)
+        public Task<Message> QueryAsync(DomainName name, DnsType rtype, CancellationToken cancel = default)
         {
             var query = new Message
             {
                 Id = NextQueryId(),
-                RD = true
+                RD = true,
             };
             query.Questions.Add(new Question { Name = name, Type = rtype });
 
@@ -60,10 +55,7 @@ namespace Makaretu.Dns
         }
 
         /// <inheritdoc />
-        public Task<Message> SecureQueryAsync(
-            DomainName name,
-            DnsType rtype,
-            CancellationToken cancel = default)
+        public Task<Message> SecureQueryAsync(DomainName name, DnsType rtype, CancellationToken cancel = default)
         {
             var query = new Message
             {
@@ -76,21 +68,17 @@ namespace Makaretu.Dns
         }
 
         /// <inheritdoc />
-        public async Task<DomainName> ResolveAsync(
-            IPAddress address,
-            CancellationToken cancel = default)
+        public async Task<DomainName> ResolveAsync(IPAddress address, CancellationToken cancel = default)
         {
-            var response = await QueryAsync(address.GetArpaName(), DnsType.PTR);
+            var response = await QueryAsync(address.GetArpaName(), DnsType.PTR, cancel);
             return response.Answers
                 .OfType<PTRRecord>()
                 .Select(p => p.DomainName)
-                .First();
+                .FirstOrDefault();
         }
 
         /// <inheritdoc />
-        public abstract Task<Message> QueryAsync(
-            Message request,
-            CancellationToken cancel = default);
+        public abstract Task<Message> QueryAsync(Message request, CancellationToken cancel = default);
 
         /// <inheritdoc />
         public void Dispose() => Dispose(true);

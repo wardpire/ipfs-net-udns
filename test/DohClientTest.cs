@@ -12,7 +12,6 @@ using System.Threading.Tasks;
 
 namespace Makaretu.Dns
 {
-    
     [TestClass]
     public class DohClientTest
     {
@@ -48,7 +47,7 @@ namespace Makaretu.Dns
         {
             var doh = new DohClient();
             var query = new Message { RD = true };
-            query.Questions.Add(new Question { Name = "ipfs.io", Type = DnsType.TXT });
+            query.Questions.Add(new Question { Name = "ipfs.tech", Type = DnsType.TXT });
             var response = await doh.QueryAsync(query);
             Assert.IsNotNull(response);
             Assert.AreNotEqual(0, response.Answers.Count);
@@ -167,25 +166,10 @@ namespace Makaretu.Dns
         {
             var doh = new DohClient
             {
-                ServerUrl = "https://dns.google.com/experimental"
+                UsePrimaryUrl = true
             };
             var query = new Message { RD = true };
-            query.Questions.Add(new Question { Name = "ipfs.io", Type = DnsType.TXT });
-            var response = await doh.QueryAsync(query);
-            Assert.IsNotNull(response);
-            Assert.AreNotEqual(0, response.Answers.Count);
-        }
-
-        [TestMethod]
-        [Ignore("doh.securedns.eu now requires authentication")]
-        public async Task Query_SecureEuServer()
-        {
-            var doh = new DohClient
-            {
-                ServerUrl = "https://doh.securedns.eu/dns-query"
-            };
-            var query = new Message { RD = true };
-            query.Questions.Add(new Question { Name = "ipfs.io", Type = DnsType.TXT });
+            query.Questions.Add(new Question { Name = "ipfs.tech", Type = DnsType.TXT });
             var response = await doh.QueryAsync(query);
             Assert.IsNotNull(response);
             Assert.AreNotEqual(0, response.Answers.Count);
@@ -200,7 +184,7 @@ namespace Makaretu.Dns
                 RD = true,
                 Questions =
                 {
-                    new Question { Name = "ipfs.io", Type = DnsType.TXT }
+                    new Question { Name = "ipfs.tech", Type = DnsType.TXT }
                 },
                 AdditionalRecords =
                 {
@@ -220,6 +204,5 @@ namespace Makaretu.Dns
             Assert.IsNotNull(response);
             Assert.AreNotEqual(0, response.Answers.Count);
         }
-
     }
 }

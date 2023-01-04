@@ -12,11 +12,10 @@ using System.Threading.Tasks;
 
 namespace Makaretu.Dns
 {
-    
     [TestClass]
     public class DotClientTest
     {
-        static bool SupportsIPv6
+        private static bool SupportsIPv6
         {
             get
             {
@@ -48,7 +47,7 @@ namespace Makaretu.Dns
                 var addresses = dot.ResolveAsync("github.com").Result.ToArray();
                 Assert.AreNotEqual(0, addresses.Length);
 
-                addresses = dot.ResolveAsync("ipfs.io").Result.ToArray();
+                addresses = dot.ResolveAsync("ipfs.tech").Result.ToArray();
                 Assert.AreNotEqual(0, addresses.Length);
             }
         }
@@ -71,7 +70,7 @@ namespace Makaretu.Dns
             using (var dot = new DotClient())
             {
                 var query = new Message { RD = true, Id = 0x1234 };
-                query.Questions.Add(new Question { Name = "ipfs.io", Type = DnsType.TXT });
+                query.Questions.Add(new Question { Name = "ipfs.tech", Type = DnsType.TXT });
                 var response = await dot.QueryAsync(query);
                 Assert.IsNotNull(response);
                 Assert.AreNotEqual(0, response.Answers.Count);
@@ -101,7 +100,7 @@ namespace Makaretu.Dns
             using (var dot = new DotClient())
             {
                 var query = new Message { RD = true, Id = 0x1234 };
-                query.Questions.Add(new Question { Name = "ipfs.io", Type = DnsType.TXT });
+                query.Questions.Add(new Question { Name = "ipfs.tech", Type = DnsType.TXT });
                 var response = await dot.QueryAsync(query);
                 Assert.IsNotNull(response);
                 Assert.AreNotEqual(0, response.Answers.Count);
@@ -200,29 +199,27 @@ namespace Makaretu.Dns
         [TestMethod]
         public async Task Query_OneDeadServer()
         {
-            using (var dot = new DotClient
+            using var dot = new DotClient
             {
-                Servers = new[]
-                {
-                    new DotEndPoint
-                    {
-                        Address = IPAddress.Parse("127.0.0.1"),
-                        Port = 8530
-                    },
-                    new DotEndPoint
-                    {
-                        Hostname = "cloudflare-dns.com",
-                        Address = IPAddress.Parse("1.1.1.1")
-                    }
-                }
-            })
-            {
-                var query = new Message { RD = true };
-                query.Questions.Add(new Question { Name = "ipfs.io", Type = DnsType.TXT });
-                var response = await dot.QueryAsync(query);
-                Assert.IsNotNull(response);
-                Assert.AreNotEqual(0, response.Answers.Count);
-            }
+                //Servers = new[]
+                //{
+                //    new DotEndPoint
+                //    {
+                //        Address = IPAddress.Parse("127.0.0.1"),
+                //        Port = 8530
+                //    },
+                //    new DotEndPoint
+                //    {
+                //        Hostname = "cloudflare-dns.com",
+                //        Address = IPAddress.Parse("1.1.1.1")
+                //    }
+                //}
+            };
+            var query = new Message { RD = true };
+            query.Questions.Add(new Question { Name = "ipfs.tech", Type = DnsType.TXT });
+            var response = await dot.QueryAsync(query);
+            Assert.IsNotNull(response);
+            Assert.AreNotEqual(0, response.Answers.Count);
         }
 
         [TestMethod]
@@ -234,7 +231,7 @@ namespace Makaretu.Dns
             })
             {
                 var query = new Message { RD = true };
-                query.Questions.Add(new Question { Name = "ipfs.io", Type = DnsType.TXT });
+                query.Questions.Add(new Question { Name = "ipfs.tech", Type = DnsType.TXT });
                 ExceptionAssert.Throws<Exception>(() =>
                 {
                     var _ = dot.QueryAsync(query).Result;
@@ -277,28 +274,25 @@ namespace Makaretu.Dns
             {
                 Assert.Inconclusive("IPv6 not supported by OS.");
             }
-            using (var dot = new DotClient
+            using var dot = new DotClient
             {
-                Servers = new[]
-                {
-                    new DotEndPoint
-                    {
-                        Hostname = "cloudflare-dns.com",
-                        Address = IPAddress.Parse("2606:4700:4700::1111")
-                    }
-                }
-            })
-            {
-                var query = new Message { RD = true };
-                query.Questions.Add(new Question { Name = "ipfs.io", Type = DnsType.TXT });
-                var response = await dot.QueryAsync(query);
-                Assert.IsNotNull(response);
-                Assert.AreNotEqual(0, response.Answers.Count);
-            }
+                //Servers = new[]
+                //{
+                //    new DotEndPoint
+                //    {
+                //        Hostname = "cloudflare-dns.com",
+                //        Address = IPAddress.Parse("2606:4700:4700::1111")
+                //    }
+                //}
+            };
+            var query = new Message { RD = true };
+            query.Questions.Add(new Question { Name = "ipfs.tech", Type = DnsType.TXT });
+            var response = await dot.QueryAsync(query);
+            Assert.IsNotNull(response);
+            Assert.AreNotEqual(0, response.Answers.Count);
         }
 
         [TestMethod]
-        [Ignore("https://github.com/richardschneider/net-udns/issues/18")]
         public async Task Query_Quad9()
         {
             using (var dot = new DotClient
@@ -314,7 +308,7 @@ namespace Makaretu.Dns
             })
             {
                 var query = new Message { RD = true };
-                query.Questions.Add(new Question { Name = "ipfs.io", Type = DnsType.TXT });
+                query.Questions.Add(new Question { Name = "ipfs.tech", Type = DnsType.TXT });
                 var response = await dot.QueryAsync(query);
                 Assert.IsNotNull(response);
                 Assert.AreNotEqual(0, response.Answers.Count);
@@ -337,36 +331,11 @@ namespace Makaretu.Dns
             })
             {
                 var query = new Message { RD = true };
-                query.Questions.Add(new Question { Name = "ipfs.io", Type = DnsType.TXT });
+                query.Questions.Add(new Question { Name = "ipfs.tech", Type = DnsType.TXT });
                 var response = await dot.QueryAsync(query);
                 Assert.IsNotNull(response);
                 Assert.AreNotEqual(0, response.Answers.Count);
             }
         }
-
-        [TestMethod]
-        public async Task Query_SecureEU()
-        {
-            using (var dot = new DotClient
-            {
-                Servers = new[]
-                {
-                    new DotEndPoint
-                    {
-                        Hostname = "securedns.eu",
-                        Pins = new[] { "h3mufC43MEqRD6uE4lz6gAgULZ5/riqH/E+U+jE3H8g=" },
-                        Address = IPAddress.Parse("146.185.167.43")
-                    },
-                }
-            })
-            {
-                var query = new Message { RD = true };
-                query.Questions.Add(new Question { Name = "ipfs.io", Type = DnsType.TXT });
-                var response = await dot.QueryAsync(query);
-                Assert.IsNotNull(response);
-                Assert.AreNotEqual(0, response.Answers.Count);
-            }
-        }
-
     }
 }

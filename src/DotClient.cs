@@ -34,7 +34,7 @@ namespace Makaretu.Dns
     {
         private SslStream dnsServer;
         private readonly AsyncLock dnsServerLock = new AsyncLock();
-        private readonly Random rng = new Random();
+        private readonly Random rng = new();
 
         /// <summary>
         ///   The default port of a DOT server.
@@ -131,38 +131,22 @@ namespace Makaretu.Dns
             {
                 Hostname = "cloudflare-dns.com",
                 Address = IPAddress.Parse("1.0.0.1")
-            }, new DotEndPoint
-            {
-                Hostname = "securedns.eu",
-                Pins = new[] { "h3mufC43MEqRD6uE4lz6gAgULZ5/riqH/E+U+jE3H8g=" },
-                Address = IPAddress.Parse("2a03:b0c0:0:1010::e9a:3001")
             },
             new DotEndPoint
             {
-                Hostname = "securedns.eu",
-                Pins = new[] { "h3mufC43MEqRD6uE4lz6gAgULZ5/riqH/E+U+jE3H8g=" },
-                Address = IPAddress.Parse("146.185.167.43")
+                Hostname = "cloudflare-dns.com",
+                Address = IPAddress.Parse("2606:4700:4700::1111")
             },
-            //new DotEndPoint // Downwards are local DNS unique to your country or region
-            //{
-            //    Hostname = "cloudflare-dns.com",
-            //    Address = IPAddress.Parse("1.1.1.1")
-            //},
-            //new DotEndPoint
-            //{
-            //    Hostname = "cloudflare-dns.com",
-            //    Address = IPAddress.Parse("1.0.0.1")
-            //},
-            //new DotEndPoint
-            //{
-            //    Hostname = "cloudflare-dns.com",
-            //    Address = IPAddress.Parse("1.1.1.1")
-            //},
-            //new DotEndPoint
-            //{
-            //    Hostname = "cloudflare-dns.com",
-            //    Address = IPAddress.Parse("1.0.0.1")
-            //},
+            new DotEndPoint
+            {
+                Hostname = "cloudflare-dns.com",
+                Address = IPAddress.Parse("2606:4700:4700::1001")
+            },
+            new DotEndPoint // Downwards are local DNS unique to your country or region
+            {
+                Hostname = "nigcomsat.ng",
+                Address = IPAddress.Parse("41.57.120.177")
+            }
 
 // see https://github.com/richardschneider/net-udns/issues/18"
 #if false
@@ -245,9 +229,7 @@ namespace Makaretu.Dns
         ///   Sends the <paramref name="request"/> and waits for
         ///   the matching response.
         /// </remarks>
-        public override async Task<Message> QueryAsync(
-            Message request,
-            CancellationToken cancel = default)
+        public override async Task<Message> QueryAsync(Message request, CancellationToken cancel = default)
         {
             // Find a server.
             var server = await GetDnsServerAsync();

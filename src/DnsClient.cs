@@ -11,6 +11,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 namespace Makaretu.Dns
 {
@@ -91,7 +92,8 @@ namespace Makaretu.Dns
         {
             return NetworkInterface.GetAllNetworkInterfaces()
                 .Where(nic => nic.OperationalStatus == OperationalStatus.Up
-                        && nic.NetworkInterfaceType != NetworkInterfaceType.Loopback)
+                        && nic.NetworkInterfaceType != NetworkInterfaceType.Loopback
+                        && nic.NetworkInterfaceType != NetworkInterfaceType.Unknown)
                 .SelectMany(nic => nic.GetIPProperties().DnsAddresses);
         }
 
@@ -118,9 +120,7 @@ namespace Makaretu.Dns
         ///   Some home routers have issues with IPv6, so IPv4 servers are tried first.
         ///   </para>
         /// </remarks>
-        public override async Task<Message> QueryAsync(
-            Message request,
-            CancellationToken cancel = default)
+        public override async Task<Message> QueryAsync(Message request, CancellationToken cancel = default)
         {
             var servers = AvailableServers()
                 .OrderBy(a => a.AddressFamily)
@@ -141,8 +141,7 @@ namespace Makaretu.Dns
             foreach (var server in servers)
             {
                 response = await QueryAsync(msg, server, cancel);
-                if (response != null)
-                    break;
+                if (response != null) break;
             }
 
             // Check the response.
@@ -151,13 +150,11 @@ namespace Makaretu.Dns
                 log.Warn("No response from DNS servers.");
                 throw new IOException("No response from DNS servers.");
             }
-            if (ThrowResponseError)
+
+            if (ThrowResponseError && response.Status != MessageStatus.NoError)
             {
-                if (response.Status != MessageStatus.NoError)
-                {
-                    log.Warn($"DNS error '{response.Status}'.");
-                    throw new IOException($"DNS error '{response.Status}'.");
-                }
+                log.Warn($"DNS error '{response.Status}'.");
+                throw new IOException($"DNS error '{response.Status}'.");
             }
 
             if (log.IsDebugEnabled)
@@ -174,11 +171,13 @@ namespace Makaretu.Dns
             try
             {
                 var response = await QueryUdpAsync(request, server, cts.Token);
-                // If truncated response, then use TCP.
-                if (response?.TC == false)
+                if (response?.TC == false) // If truncated response, then use TCP.
                 {
                     return response;
                 }
+
+                //
+                throw new Exception($"UDP Response {response} || Server: {server} || Request: {request}");
             }
             catch (SocketException e)
             {
@@ -193,9 +192,7 @@ namespace Makaretu.Dns
             }
 
             // If no response, then try TCP
-            cts = CancellationTokenSource.CreateLinkedTokenSource(
-                cancel,
-                new CancellationTokenSource(TimeoutTcp).Token);
+            cts = CancellationTokenSource.CreateLinkedTokenSource(cancel, new CancellationTokenSource(TimeoutTcp).Token);
             try
             {
                 return await QueryTcpAsync(request, server, cts.Token);
@@ -207,10 +204,7 @@ namespace Makaretu.Dns
             }
         }
 
-        private async Task<Message> QueryUdpAsync(
-            byte[] request,
-            IPAddress server,
-            CancellationToken cancel)
+        private async Task<Message> QueryUdpAsync(byte[] request, IPAddress server, CancellationToken cancel)
         {
             var endPoint = new IPEndPoint(server, DnsPort);
             log.Debug("UDP to " + endPoint.ToString());
@@ -226,10 +220,7 @@ namespace Makaretu.Dns
             }
         }
 
-        private async Task<Message> QueryTcpAsync(
-            byte[] request,
-            IPAddress server,
-            CancellationToken cancel)
+        private async Task<Message> QueryTcpAsync(byte[] request, IPAddress server, CancellationToken cancel)
         {
             log.Debug("TCP to " + server.ToString());
 

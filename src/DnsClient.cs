@@ -1,5 +1,5 @@
 ﻿using Common.Logging;
-using Nito.AsyncEx; 
+using Nito.AsyncEx;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -11,6 +11,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 namespace Makaretu.Dns
 {
@@ -22,9 +23,9 @@ namespace Makaretu.Dns
     /// </remarks>
     public class DnsClient : DnsClientBase
     {
-        static ILog log = LogManager.GetLogger(typeof(DnsClient));
-
-        const int DnsPort = 53;
+        private static readonly ILog log = LogManager.GetLogger(typeof(DnsClient));
+        private static readonly TimeSpan timeOut = TimeSpan.FromSeconds(4);
+        private const int DnsPort = 53;
 
         /// <summary>
         ///   Time to wait for a DNS UDP response.
@@ -32,7 +33,7 @@ namespace Makaretu.Dns
         /// <value>
         ///   The default is 4 seconds.
         /// </value>
-        public TimeSpan TimeoutUdp { get; set; } = TimeSpan.FromSeconds(4);
+        public TimeSpan TimeoutUdp { get; set; } = timeOut;
 
         /// <summary>
         ///   Time to wait for a DNS TCP response.
@@ -40,9 +41,9 @@ namespace Makaretu.Dns
         /// <value>
         ///   The default is 4 seconds.
         /// </value>
-        public TimeSpan TimeoutTcp { get; set; } = TimeSpan.FromSeconds(4);
+        public TimeSpan TimeoutTcp { get; set; } = timeOut;
 
-        IEnumerable<IPAddress> servers;
+        private IEnumerable<IPAddress> servers;
 
         /// <summary>
         ///   The DNS servers to communication with.
@@ -90,8 +91,9 @@ namespace Makaretu.Dns
         public IEnumerable<IPAddress> GetServers()
         {
             return NetworkInterface.GetAllNetworkInterfaces()
-                .Where(nic => nic.OperationalStatus == OperationalStatus.Up)
-                .Where(nic => nic.NetworkInterfaceType != NetworkInterfaceType.Loopback)
+                .Where(nic => nic.OperationalStatus == OperationalStatus.Up
+                        && nic.NetworkInterfaceType != NetworkInterfaceType.Loopback
+                        && nic.NetworkInterfaceType != NetworkInterfaceType.Unknown)
                 .SelectMany(nic => nic.GetIPProperties().DnsAddresses);
         }
 
@@ -118,9 +120,7 @@ namespace Makaretu.Dns
         ///   Some home routers have issues with IPv6, so IPv4 servers are tried first.
         ///   </para>
         /// </remarks>
-        public override async Task<Message> QueryAsync(
-            Message request,
-            CancellationToken cancel = default(CancellationToken))
+        public override async Task<Message> QueryAsync(Message request, CancellationToken cancel = default)
         {
             var servers = AvailableServers()
                 .OrderBy(a => a.AddressFamily)
@@ -141,8 +141,7 @@ namespace Makaretu.Dns
             foreach (var server in servers)
             {
                 response = await QueryAsync(msg, server, cancel);
-                if (response != null)
-                    break;
+                if (response != null) break;
             }
 
             // Check the response.
@@ -151,13 +150,11 @@ namespace Makaretu.Dns
                 log.Warn("No response from DNS servers.");
                 throw new IOException("No response from DNS servers.");
             }
-            if (ThrowResponseError)
+
+            if (ThrowResponseError && response.Status != MessageStatus.NoError)
             {
-                if (response.Status != MessageStatus.NoError)
-                {
-                    log.Warn($"DNS error '{response.Status}'.");
-                    throw new IOException($"DNS error '{response.Status}'.");
-                }
+                log.Warn($"DNS error '{response.Status}'.");
+                throw new IOException($"DNS error '{response.Status}'.");
             }
 
             if (log.IsDebugEnabled)
@@ -167,20 +164,20 @@ namespace Makaretu.Dns
             return response;
         }
 
-        async Task<Message> QueryAsync(byte[] request, IPAddress server, CancellationToken cancel)
+        private async Task<Message> QueryAsync(byte[] request, IPAddress server, CancellationToken cancel)
         {
             // Try UDP first.
-            var cts = CancellationTokenSource.CreateLinkedTokenSource(
-                cancel,
-                new CancellationTokenSource(TimeoutUdp).Token);
+            var cts = CancellationTokenSource.CreateLinkedTokenSource(cancel, new CancellationTokenSource(TimeoutUdp).Token);
             try
             {
                 var response = await QueryUdpAsync(request, server, cts.Token);
-                // If truncated response, then use TCP.
-                if (response != null && !response.TC)
+                if (response?.TC == false) // If truncated response, then use TCP.
                 {
                     return response;
                 }
+
+                //
+                throw new Exception($"UDP Response {response} || Server: {server} || Request: {request}");
             }
             catch (SocketException e)
             {
@@ -190,14 +187,12 @@ namespace Makaretu.Dns
             }
             catch (TaskCanceledException e)
             {
-                // Timeout, will retry with TCP 
+                // Timeout, will retry with TCP
                 log.Warn(e.Message);
             }
 
             // If no response, then try TCP
-            cts = CancellationTokenSource.CreateLinkedTokenSource(
-                cancel,
-                new CancellationTokenSource(TimeoutTcp).Token);
+            cts = CancellationTokenSource.CreateLinkedTokenSource(cancel, new CancellationTokenSource(TimeoutTcp).Token);
             try
             {
                 return await QueryTcpAsync(request, server, cts.Token);
@@ -209,10 +204,7 @@ namespace Makaretu.Dns
             }
         }
 
-        async Task<Message> QueryUdpAsync(
-            byte[] request,
-            IPAddress server,
-            CancellationToken cancel)
+        private async Task<Message> QueryUdpAsync(byte[] request, IPAddress server, CancellationToken cancel)
         {
             var endPoint = new IPEndPoint(server, DnsPort);
             log.Debug("UDP to " + endPoint.ToString());
@@ -228,10 +220,7 @@ namespace Makaretu.Dns
             }
         }
 
-        async Task<Message> QueryTcpAsync(
-            byte[] request,
-            IPAddress server,
-            CancellationToken cancel)
+        private async Task<Message> QueryTcpAsync(byte[] request, IPAddress server, CancellationToken cancel)
         {
             log.Debug("TCP to " + server.ToString());
 
@@ -242,16 +231,16 @@ namespace Makaretu.Dns
                     .WaitAsync(cancel);
                 using (var stream = client.GetStream())
                 {
-                    // The message is prefixed with a two byte length field which gives 
+                    // The message is prefixed with a two byte length field which gives
                     // the message length, excluding the two byte length field.
                     byte[] length = BitConverter.GetBytes((ushort)request.Length);
                     if (BitConverter.IsLittleEndian)
                     {
                         Array.Reverse(length);
                     }
-                    await stream.WriteAsync(length, 0, length.Length, cancel);
-                    await stream.WriteAsync(request, 0, request.Length, cancel);
-                    await stream.FlushAsync();
+                    await stream.WriteAsync(length, cancel);
+                    await stream.WriteAsync(request, cancel);
+                    await stream.FlushAsync(cancel);
 
                     // Read response length
                     var buffer = new byte[2];
@@ -268,12 +257,11 @@ namespace Makaretu.Dns
 
                     // Read response message
                     buffer = new byte[responseLength];
-                    n = await stream.ReadAsync(buffer, 0, buffer.Length, cancel);
+                    n = await stream.ReadAsync(buffer, cancel);
                     var response = (Message)(new Message().Read(buffer, 0, n));
                     return response;
                 }
             }
         }
-
     }
 }

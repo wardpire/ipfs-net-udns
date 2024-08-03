@@ -1,43 +1,44 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFrameworks>net46;netstandard14;netstandard2</TargetFrameworks>
-    <AssemblyName>Makaretu.Dns.Unicast</AssemblyName>
-    <RootNamespace>Makaretu.Dns</RootNamespace>
-    <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
-    <DebugType>full</DebugType>
-    
-    <!-- developer build is always 0.42 -->
-    <AssemblyVersion>0.42</AssemblyVersion>
-    <Version>0.42</Version>
-    
-    <!-- Nuget specs -->
-    <PackageId>Makaretu.Dns.Unicast</PackageId>
-    <Authors>Richard Schneider</Authors>
-    <Title>Unicast DNS clients</Title>
-    <Description>Clients that communicate with a standard DNS server or a DNS server over HTTPS.</Description>
-    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <PackageReleaseNotes>https://github.com/richardschneider/net-udns/releases</PackageReleaseNotes>
-    <Copyright>© 2018 Richard Schneider</Copyright>
-    <PackageTags>unicast dns https doh dot client</PackageTags>
-    <IncludeSymbols>True</IncludeSymbols>
-    <PackageLicenseUrl>https://github.com/richardschneider/net-udns/blob/master/LICENSE</PackageLicenseUrl>
-    <PackageProjectUrl>https://github.com/richardschneider/net-udns</PackageProjectUrl>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net7.0</TargetFramework>
+		<AssemblyName>Makaretu.Dns.Unicast</AssemblyName>
+		<RootNamespace>Makaretu.Dns</RootNamespace>
+		<DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
+		<DebugType>full</DebugType>
 
-  <PropertyGroup Condition=" '$(TargetFramework)' == 'netstandard14'">
-    <DefineConstants>NETSTANDARD14</DefineConstants>
-  </PropertyGroup>
+		<!-- developer build is always 0.42 -->
+		<AssemblyVersion>0.42</AssemblyVersion>
+		<Version>0.42</Version>
 
-  <ItemGroup>
-    <PackageReference Include="Common.Logging" Version="3.4.1" />
-    <PackageReference Include="Makaretu.Dns" Version="2.0.1" />
-    <PackageReference Include="Nito.AsyncEx" Version="5.0.0" />
-  </ItemGroup>
-  
-  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard14'">
-    <PackageReference Include="System.Net.NetworkInformation" Version="4.3.0" />
-    <PackageReference Include="System.Net.Security" Version="4.3.2" />
-  </ItemGroup>
+		<!-- Nuget specs -->
+		<PackageId>Makaretu.Dns.Unicast</PackageId>
+		<Authors>Myina</Authors>
+		<Title>Unicast DNS clients</Title>
+		<Description>Clients that communicate with a standard DNS server or a DNS server over HTTPS.</Description>
+		<PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+		<PackageReleaseNotes>https://github.com/Myina/net-udns/releases</PackageReleaseNotes>
+		<Copyright>© 2022 Myina</Copyright>
+		<PackageTags>unicast dns https doh dot client</PackageTags>
+		<IncludeSymbols>True</IncludeSymbols>
+		<PackageLicenseUrl>https://github.com/Myina/net-udns/blob/master/LICENSE</PackageLicenseUrl>
+		<PackageProjectUrl>https://github.com/Myina/net-udns</PackageProjectUrl>
+	</PropertyGroup>
+
+	<PropertyGroup Condition=" '$(TargetFramework)' == 'netstandard14'">
+		<DefineConstants>NETSTANDARD14</DefineConstants>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="SimpleBase" Version="4.0.0" />
+		<PackageReference Include="Common.Logging" Version="3.4.1" />
+		<PackageReference Include="Nito.AsyncEx" Version="5.1.2" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Reference Include="Makaretu.Dns">
+			<HintPath>..\..\net-dns\src\bin\Release\net7.0\Makaretu.Dns.dll</HintPath>
+		</Reference>
+	</ItemGroup>
 
 </Project>

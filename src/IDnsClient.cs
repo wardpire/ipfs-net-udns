@@ -56,9 +56,7 @@ namespace Makaretu.Dns
         ///   A task that represents the asynchronous operation. The task's value
         ///   contains the <see cref="IPAddress"/> sequence for the <paramref name="name"/>.
         /// </returns>
-        Task<IEnumerable<IPAddress>> ResolveAsync(
-            DomainName name,
-            CancellationToken cancel = default(CancellationToken));
+        Task<IEnumerable<IPAddress>> ResolveAsync(DomainName name, CancellationToken cancel = default);
 
         /// <summary>
         ///   Send a DNS query with the specified name and resource record type.
@@ -79,10 +77,7 @@ namespace Makaretu.Dns
         /// <remarks>
         ///   Creates a query <see cref="Message"/> and then calls <see cref="QueryAsync(Message, CancellationToken)"/>.
         /// </remarks>
-        Task<Message> QueryAsync(
-            DomainName name,
-            DnsType rtype,
-            CancellationToken cancel = default(CancellationToken));
+        Task<Message> QueryAsync(DomainName name, DnsType rtype, CancellationToken cancel = default);
 
         /// <summary>
         ///   Send a DNSSEC query with the specified name and resource record type.
@@ -104,10 +99,7 @@ namespace Makaretu.Dns
         ///   Creates a secure query <see cref="Message"/> and then calls <see cref="QueryAsync(Message, CancellationToken)"/>.
         /// </remarks>
         /// <seealso cref="Message.UseDnsSecurity"/>
-        Task<Message> SecureQueryAsync(
-            DomainName name,
-            DnsType rtype,
-            CancellationToken cancel = default(CancellationToken));
+        Task<Message> SecureQueryAsync(DomainName name, DnsType rtype, CancellationToken cancel = default);
 
         /// <summary>
         ///   Reverse query for an IP address.
@@ -128,9 +120,7 @@ namespace Makaretu.Dns
         ///   Performs a reverse lookup with a <see cref="DnsType.PTR"/>.  The
         ///   response contains the name(s) of the <paramref name="address"/>.
         /// </remarks>
-        Task<DomainName> ResolveAsync(
-            IPAddress address,
-            CancellationToken cancel = default(CancellationToken));
+        Task<DomainName> ResolveAsync(IPAddress address, CancellationToken cancel = default);
 
         /// <summary>
         ///   Send a DNS query with the specified message.
@@ -155,8 +145,6 @@ namespace Makaretu.Dns
         ///   Some home routers have issues with IPv6, so IPv4 servers are tried first.
         ///   </para>
         /// </remarks>
-        Task<Message> QueryAsync(
-            Message request,
-            CancellationToken cancel = default(CancellationToken));
+        Task<Message> QueryAsync(Message request, CancellationToken cancel = default);
     }
 }

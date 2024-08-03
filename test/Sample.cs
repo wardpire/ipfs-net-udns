@@ -12,16 +12,14 @@ using System.Threading.Tasks;
 
 namespace Makaretu.Dns
 {
-    
     [TestClass]
     public class Sample
     {
-
         [TestMethod]
         public async Task TXT()
         {
             var dns = new DnsClient();
-            var response = await dns.QueryAsync("ipfs.io", DnsType.TXT);
+            var response = await dns.QueryAsync("ipfs.tech", DnsType.TXT);
             var strings = response.Answers
                 .OfType<TXTRecord>()
                 .SelectMany(txt => txt.Strings);

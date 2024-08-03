@@ -15,7 +15,7 @@ namespace Makaretu.Dns
     /// </remarks>
     public abstract class DnsClientBase : IDnsClient
     {
-        int nextQueryId = new Random().Next((int)ushort.MaxValue + 1);
+        private int nextQueryId = new Random().Next((int)ushort.MaxValue + 1);
 
         /// <inheritdoc />
         public bool ThrowResponseError { get; set; } = true;
@@ -28,9 +28,7 @@ namespace Makaretu.Dns
         }
 
         /// <inheritdoc />
-        public async Task<IEnumerable<IPAddress>> ResolveAsync(
-            DomainName name,
-            CancellationToken cancel = default(CancellationToken))
+        public async Task<IEnumerable<IPAddress>> ResolveAsync(DomainName name, CancellationToken cancel = default)
         {
             var a = QueryAsync(name, DnsType.A, cancel);
             var aaaa = QueryAsync(name, DnsType.AAAA, cancel);
@@ -44,15 +42,12 @@ namespace Makaretu.Dns
         }
 
         /// <inheritdoc />
-        public Task<Message> QueryAsync(
-            DomainName name,
-            DnsType rtype,
-            CancellationToken cancel = default(CancellationToken))
+        public Task<Message> QueryAsync(DomainName name, DnsType rtype, CancellationToken cancel = default)
         {
             var query = new Message
             {
                 Id = NextQueryId(),
-                RD = true
+                RD = true,
             };
             query.Questions.Add(new Question { Name = name, Type = rtype });
 
@@ -60,10 +55,7 @@ namespace Makaretu.Dns
         }
 
         /// <inheritdoc />
-        public Task<Message> SecureQueryAsync(
-            DomainName name,
-            DnsType rtype,
-            CancellationToken cancel = default(CancellationToken))
+        public Task<Message> SecureQueryAsync(DomainName name, DnsType rtype, CancellationToken cancel = default)
         {
             var query = new Message
             {
@@ -76,27 +68,20 @@ namespace Makaretu.Dns
         }
 
         /// <inheritdoc />
-        public async Task<DomainName> ResolveAsync(
-            IPAddress address,
-            CancellationToken cancel = default(CancellationToken))
+        public async Task<DomainName> ResolveAsync(IPAddress address, CancellationToken cancel = default)
         {
-            var response = await QueryAsync(address.GetArpaName(), DnsType.PTR);
+            var response = await QueryAsync(address.GetArpaName(), DnsType.PTR, cancel);
             return response.Answers
                 .OfType<PTRRecord>()
                 .Select(p => p.DomainName)
-                .First();
+                .FirstOrDefault();
         }
 
         /// <inheritdoc />
-        public abstract Task<Message> QueryAsync(
-            Message request,
-            CancellationToken cancel = default(CancellationToken));
+        public abstract Task<Message> QueryAsync(Message request, CancellationToken cancel = default);
 
         /// <inheritdoc />
-        public void Dispose()
-        {
-            Dispose(true);
-        }
+        public void Dispose() => Dispose(true);
 
         /// <summary>
         ///   Dispose the client.
@@ -111,7 +96,7 @@ namespace Makaretu.Dns
         /// <summary>
         ///   Another name for <see cref="QueryAsync(Message, CancellationToken)"/>.
         /// </summary>
-        public Task<Message> ResolveAsync(Message request, CancellationToken cancel = default(CancellationToken))
+        public Task<Message> ResolveAsync(Message request, CancellationToken cancel = default)
         {
             return QueryAsync(request, cancel);
         }

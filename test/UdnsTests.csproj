@@ -1,21 +1,26 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net46;netcoreapp2;netcoreapp1.1</TargetFrameworks>
-
+	  <TargetFramework>net7.0</TargetFramework>
     <IsPackable>false</IsPackable>
     <DebugType>full</DebugType>
     <RootNamespace>Makaretu.Dns</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.6.0" />
-    <PackageReference Include="MSTest.TestAdapter" Version="1.2.0" />
-    <PackageReference Include="MSTest.TestFramework" Version="1.2.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.4.1" />
+    <PackageReference Include="MSTest.TestAdapter" Version="3.0.2" />
+    <PackageReference Include="MSTest.TestFramework" Version="3.0.2" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\src\Udns.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Makaretu.Dns">
+      <HintPath>..\..\net-dns\src\bin\Release\net7.0\Makaretu.Dns.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 </Project>

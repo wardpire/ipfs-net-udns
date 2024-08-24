@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFramework>net7.0</TargetFramework>
+		<TargetFramework>net8.0</TargetFramework>
 		<AssemblyName>Makaretu.Dns.Unicast</AssemblyName>
 		<RootNamespace>Makaretu.Dns</RootNamespace>
 		<DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
@@ -36,9 +36,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<Reference Include="Makaretu.Dns">
-			<HintPath>..\..\net-dns\src\bin\Release\net7.0\Makaretu.Dns.dll</HintPath>
-		</Reference>
+	  <ProjectReference Include="..\..\net-dns\src\Dns.csproj" />
 	</ItemGroup>
 
 </Project>
